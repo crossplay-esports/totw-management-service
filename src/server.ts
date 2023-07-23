@@ -4,7 +4,10 @@ import cors from 'cors';
 import adminRoute from './routes/admin';
 import totwRoute from './routes/totw';
 import futwizRoute from './routes/futwiz';
+import discordRoute from './routes/discord';
 import { initializePlayerData } from './database/mongo/dao/futwiz';
+
+require("dotenv").config();
 
 const app = () => {
     const app = express();
@@ -27,6 +30,7 @@ const app = () => {
     app.use('/admin',adminRoute);
     app.use('/totw',totwRoute)
     app.use('/futwiz',futwizRoute);
+    app.use('/discord',discordRoute);
      // All non-specified routes return 404
     app.get('*', (_, res) => res.status(404).send('Not Found'));
 
