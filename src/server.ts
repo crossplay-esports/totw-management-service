@@ -3,6 +3,8 @@ import http from 'http';
 import cors from 'cors';
 import adminRoute from './routes/admin';
 import totwRoute from './routes/totw';
+import futwizRoute from './routes/futwiz';
+import { initializePlayerData } from './database/mongo/dao/futwiz';
 
 const app = () => {
     const app = express();
@@ -24,8 +26,12 @@ const app = () => {
     app.get('/health', (_, res) => res.status(200).send({ success: true }));
     app.use('/admin',adminRoute);
     app.use('/totw',totwRoute)
+    app.use('/futwiz',futwizRoute);
      // All non-specified routes return 404
     app.get('*', (_, res) => res.status(404).send('Not Found'));
+
+    // initialize futwiz data
+    initializePlayerData();
 
     const server = http.createServer(app);
     server.on('listening', () => {
