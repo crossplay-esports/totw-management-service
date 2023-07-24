@@ -12,11 +12,11 @@ router.use((_req, _res, next) => {
 
 router.get("/member/search", async (req, res, _next) => {
     const {query} = req;
-    const {gt} = query;
+    const {gt, limit} = query;
     if(!gt){
         res.status(400).send('Send gt as a mandatory query parameter')
     };
-    const users = await memberSearch(gt);
+    const users = await memberSearch(gt, limit);
     res.send(users);
 });
 
