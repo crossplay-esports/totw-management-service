@@ -11,13 +11,18 @@ router.use((_req, _res, next) => {
 
 
 router.get("/member/search", async (req, res, _next) => {
-    const {query} = req;
+ try {   const {query} = req;
     const {gt} = query;
     if(!gt){
-        res.status(400).send('Send gt as a mandatory query parameter')
+        res.status(400).send('Send gt as a mandatory query parameter');
+        return;
     };
     const users = await memberSearch(gt);
     res.send(users);
+} catch(e: any) {
+    res.status(500);
+    res.json({err: e.message})
+}
 });
 
 export default router;

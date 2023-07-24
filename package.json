@@ -4,9 +4,10 @@
   "description": "This service creates and manages TOTW generation for each week",
   "main": "index.js",
   "scripts": {
-    "start": "node build/src/index.ts",
+    "start": "node dist/tsc/index.js",
     "build": "tsc",
-    "dev": "nodemon --config nodemon.json src/index.ts"
+    "dev": "nodemon --config nodemon.json src/index.ts",
+    "start:server": "nodemon --config nodemon.json src/index.ts"
   },
   "author": "",
   "license": "ISC",
