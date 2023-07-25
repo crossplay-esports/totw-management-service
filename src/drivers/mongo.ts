@@ -1,7 +1,8 @@
 import {MongoClient} from 'mongodb';
 
+require("dotenv").config();
+
 const url = process.env.MONGO_DB_URL || 'mongodb://0.0.0.0:27017/';
-console.log(process.env.url);
 export async function connect() {
     console.log(url);
     const client = new MongoClient(url);

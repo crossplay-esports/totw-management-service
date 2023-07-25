@@ -28,7 +28,7 @@ const app = () => {
     app.use(express.json());
     app.get('/health', (_, res) => res.status(200).send({ success: true }));
     app.use('/admin',adminRoute);
-    app.use('/totw',totwRoute)
+    app.use('/manage',totwRoute)
     app.use('/futwiz',futwizRoute);
     app.use('/discord',discordRoute);
      // All non-specified routes return 404
