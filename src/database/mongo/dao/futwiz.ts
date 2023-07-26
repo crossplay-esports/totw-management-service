@@ -1,4 +1,4 @@
-import connect from "../../../drivers/mongo";
+import {getClient} from "../../../drivers/mongo";
 
 //TODO: Make this configurable later
 const top11Players = [
@@ -20,7 +20,7 @@ const playerSearchBaseAPIURL = "https://www.futwiz.com/en/searches/player22/";
 // TODO: later schedule this to refresh players everyweek
 export async function initializePlayerData() {
 	//if there are already 10 players dont do anything
-	const client = await connect();
+	const client = getClient();
 	const database = client.db("totw-db");
 	const futwizPlayers = database.collection("futwiz-players");
 	const playerCount = await futwizPlayers.countDocuments();
@@ -40,7 +40,7 @@ export async function initializePlayerData() {
 }
 
 export async function getTop11FutwizPlayers() {
-    const client = await connect();
+    const client = getClient();
     const database = await client.db('totw-db');
     const futwiz = database.collection("futwiz-players");
     const players = futwiz.find().toArray();
