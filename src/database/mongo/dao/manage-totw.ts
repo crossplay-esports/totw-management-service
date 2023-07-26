@@ -1,4 +1,4 @@
-import connect from "../../../drivers/mongo";
+import { getClient } from "../../../drivers/mongo";
 
 interface Nomination {
     id: String,
@@ -21,7 +21,7 @@ interface Nomination {
 }
 
 export async function listDatabases() {
-    const client= await connect();
+    const client= await getClient();
 
     const databaseList = await client.db().admin().listDatabases();
     console.log('Databases: ');
@@ -30,7 +30,8 @@ export async function listDatabases() {
 }
 
 export async function saveNomination(currentNominations : Nomination[]) {
-    const client= await connect();
+    console.log(currentNominations);
+    const client= getClient();
     const database = client.db('totw-db');
     const nomnination = database.collection<Nomination>("nomination");
     try{

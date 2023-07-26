@@ -6,8 +6,16 @@ import totwRoute from './routes/totw';
 import futwizRoute from './routes/futwiz';
 import discordRoute from './routes/discord';
 import { initializePlayerData } from './database/mongo/dao/futwiz';
+import connect from './drivers/mongo';
 
 require("dotenv").config();
+
+//connect to mongo
+connect().then(() => {
+    console.log('connected to mongo successfully!!');
+}).catch(ex => {
+    console.log(`Mongo connection failed: ${ex.message}`)
+}) 
 
 const app = () => {
     const app = express();

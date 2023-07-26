@@ -3,6 +3,12 @@ import { saveNomination } from '../database/mongo/dao/manage-totw';
 
 const router = express.Router();
 
+
+router.use((_req, _res, next) => {
+	console.log("Inside totw router: ", Date.now());
+	next();
+});
+
 router.post("/saveNominations", async (req, res) => {
     console.log(req.body);
     const nominations = req.body.nominations;
