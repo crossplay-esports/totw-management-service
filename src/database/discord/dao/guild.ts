@@ -18,3 +18,18 @@ export async function memberSearch(gt: any, limit: any) {
     // console.log(result);
 	return result;
 }
+
+export async function teamSearch() {
+	var reqHeader = new Headers();
+	reqHeader.append("Content-Type", "application/json");
+	reqHeader.append("Authorization", `Bot ${discordBotToken}`);
+	const response = await fetch(
+		`${discordBaseURL}/guilds/${discordGuildId}/roles`,
+		{
+			headers: reqHeader,
+		}
+	);
+	const result = await response.json();
+    // console.log(result);
+	return result;
+}
