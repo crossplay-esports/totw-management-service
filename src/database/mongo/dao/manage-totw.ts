@@ -47,3 +47,30 @@ export async function saveNomination(currentNominations : Nomination[]) {
     }
 
 }
+
+export async function calculateTeamOfTheWeek(_gw: any) {
+    
+    const client= getClient();
+    const database = client.db('totw-db');
+    const nomination = database.collection<Nomination>("nomination");
+    try{
+       // write team of the week calculation logic
+        const players = await nomination.aggregate([{
+            $match: {gameWeek: 30}
+        },
+        {
+            $group: {
+                _id: "$team",
+                total : { $sum : 1 } 
+            }
+        }]).toArray();
+        console.log(players);
+        return players;
+    }
+    catch(ex: any) {
+        return {
+            error : ex.message
+        }
+    }
+
+}
