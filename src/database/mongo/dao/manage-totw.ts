@@ -1,4 +1,5 @@
 import { getClient } from "../../../drivers/mongo";
+import { AttributeConfigSchema, AttributeWeightageConfigSchema } from "../../config/attributeWeightConfig";
 
 interface Nomination {
     id: String,
@@ -53,21 +54,46 @@ export async function calculateTeamOfTheWeek(_gw: any) {
     const client= getClient();
     const database = client.db('totw-db');
     const nomination = database.collection<Nomination>("nomination");
+    const attrbuteConfig = database.collection<AttributeConfigSchema>("attributeWeight");
+    
     try{
+        const attrbuteConfigArray = await attrbuteConfig.find().toArray();
+        const attrbuteConf = attrbuteConfigArray[0];
        // write team of the week calculation logic
-        const players = await nomination.aggregate([{
+        const playerGroups = await nomination.aggregate([{
             $match: {gameWeek: 30}
         },
         {
             $group: {
-                _id: "$team",
-                total : { $sum : 1 } 
+                _id: "$position",
+                playersByPosition: {
+                    $push: "$$ROOT"
+                }
             }
         }]).toArray();
-        console.log(players);
-        return players;
+        let allTopScoringPlayers : any = {}
+        playerGroups.forEach(item => {
+            const type: string = item._id;
+            const players = item.playersByPosition;
+            const currentTypeAttr: Array<AttributeWeightageConfigSchema> | any = attrbuteConf[type as keyof typeof attrbuteConf];
+            currentTypeAttr.forEach((attr: any) => {
+                const sortedByAttribute = players.sort((x: any, y: any) => y[attr.id] - x[attr.id]);
+                //later handle for tied finish
+                const [first,second,third, ..._restPlayers] = sortedByAttribute;
+                allTopScoringPlayers[type] = allTopScoringPlayers[type].push(...[first,second,third]);
+            });
+        });
+        let allAttributeScoredPlayers: any = {};
+        Object.keys(allTopScoringPlayers).forEach((key:any) => {
+            const currentTypePlayers = allTopScoringPlayers[key];
+            
+        })
+
+        console.log(JSON.stringify(playerGroups));
+        return playerGroups;
     }
     catch(ex: any) {
+        console.log(ex)
         return {
             error : ex.message
         }

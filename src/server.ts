@@ -7,6 +7,7 @@ import futwizRoute from './routes/futwiz';
 import discordRoute from './routes/discord';
 import { initializePlayerData } from './database/mongo/dao/futwiz';
 import connect from './drivers/mongo';
+import { seedAttributeWeight } from './database/config/attributeWeightConfig';
 
 require("dotenv").config();
 
@@ -15,7 +16,11 @@ connect().then(() => {
     console.log('connected to mongo successfully!!');
 }).catch(ex => {
     console.log(`Mongo connection failed: ${ex.message}`)
-}) 
+});
+
+// call install seed data
+seedAttributeWeight();
+
 
 const app = () => {
     const app = express();
