@@ -1,4 +1,5 @@
-import {getClient} from "../../../drivers/mongo";
+import { getClient } from "../../../drivers/mongo";
+import { getTotw } from "./manage-totw";
 
 //TODO: Make this configurable later
 const top11Players = [
@@ -12,7 +13,7 @@ const top11Players = [
 	"maldini",
 	"virgil",
 	"hakimi",
-    "yashin"
+	"yashin",
 ];
 const playerSearchBaseAPIURL = "https://www.futwiz.com/en/searches/player22/";
 
@@ -32,17 +33,35 @@ export async function initializePlayerData() {
 		top11Players.forEach(async (item) => {
 			const response = await fetch(`${playerSearchBaseAPIURL}${item}`);
 			const players = await response.json();
-			if (players && players.length > 0) await futwizPlayers.insertOne(players[0]);
+			if (players && players.length > 0)
+				await futwizPlayers.insertOne(players[0]);
 		});
 	}
 	const players = await futwizPlayers.find();
 	return players;
 }
 
-export async function getTop11FutwizPlayers() {
-    const client = getClient();
-    const database = await client.db('totw-db');
-    const futwiz = database.collection("futwiz-players");
-    const players = futwiz.find().toArray();
-    return players;
+export async function getTop11FutwizPlayers(gw: number) {
+	const client = getClient();
+	const database = await client.db("totw-db");
+	const futwiz = database.collection("futwiz-players");
+	const players = await futwiz.find().toArray();
+	const totwWinners = await getTotw(gw);
+	if (!totwWinners) return players;
+	players.map((item: any) => {
+		let playerName = "";
+		if (["cf, st, lf, rf, lw, rw"].indexOf(item.position) !== -1) {
+			const attackers = totwWinners.winners.filter(
+				(x: any) => x.pos == "attackers"
+			)[0];
+			const attacker = attackers.splice(0,1);
+			
+			return {
+				...item,
+				name: attacker.name,
+			};
+		}
+	});
+	console.log(totwWinners);
+	return players;
 }

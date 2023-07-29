@@ -3,6 +3,7 @@ import {
 	AttributeConfigSchema,
 	AttributeWeightageConfigSchema,
 } from "../../config/attributeWeightConfig";
+import { maxPlayersForPosition } from "../../config/maxPlayersForPosition";
 
 interface Nomination {
 	id: String;
@@ -33,6 +34,13 @@ export async function listDatabases() {
 	return databaseList;
 }
 
+export async function getTotw(gw:number) {
+	const client = await getClient();
+	const totwCollection = await client.db('totw-db').collection('currentTeamOfTheWeek');
+	const gameWeekTotw = await totwCollection.findOne({gameWeek: gw});
+	return gameWeekTotw;
+}
+
 export async function saveNomination(currentNominations: Nomination[]) {
 	console.log(currentNominations);
 	const client = getClient();
@@ -50,22 +58,25 @@ export async function saveNomination(currentNominations: Nomination[]) {
 	}
 }
 
-export async function calculateTeamOfTheWeek(_gw: any) {
+export async function calculateTeamOfTheWeek(gw: any) {
 	const client = getClient();
 	const database = client.db("totw-db");
 	const nomination = database.collection<Nomination>("nomination");
 	const attrbuteConfig = database.collection<AttributeConfigSchema>(
 		"attributeWeight"
 	);
+	const currentTeamOfTheWeek = database.collection(
+		"currentTeamOfTheWeek"
+	);
 
 	try {
 		const attrbuteConfigArray = await attrbuteConfig.find().toArray();
-		const attrbuteConf : AttributeConfigSchema = attrbuteConfigArray[0];
+		const attrbuteConf: AttributeConfigSchema = attrbuteConfigArray[0];
 		// write team of the week calculation logic
 		const playerGroups = await nomination
 			.aggregate([
 				{
-					$match: { gameWeek: 30 },
+					$match: { gameWeek: parseInt(gw) },
 				},
 				{
 					$group: {
@@ -78,59 +89,78 @@ export async function calculateTeamOfTheWeek(_gw: any) {
 			])
 			.toArray();
 		let allTopScoringPlayers: any = {};
-        console.log(playerGroups);
+		console.log(playerGroups);
 		playerGroups.forEach((item) => {
-            
 			const type: string = item._id;
-            console.log("arnab item",type)
 			const players = item.playersByPosition;
 			const currentTypeAttr: Array<AttributeWeightageConfigSchema> | any =
 				attrbuteConf[type as keyof typeof attrbuteConf];
-                console.log(currentTypeAttr);
 			currentTypeAttr.forEach((attr: any) => {
 				const sortedByAttribute = players.sort(
 					(x: any, y: any) => y[attr.id] - x[attr.id]
 				);
 				//later handle for tied finish
 				const [first, second, third, ..._restPlayers] = sortedByAttribute;
-                console.log("all players",sortedByAttribute);
-                console.log("current type", allTopScoringPlayers);
-                allTopScoringPlayers[type] = allTopScoringPlayers[type] || [];
-				allTopScoringPlayers[type] = allTopScoringPlayers[type].push(
+				allTopScoringPlayers[type] = allTopScoringPlayers[type] || [];
+				allTopScoringPlayers[type].push(
 					...[
-						{ id: first.name, attr: attr.id, meta: first },
-						{ id: second.name, attr: attr.id, meta: second },
-						{ id: third.name, attr: attr.id, meta: third },
+						{ id: first.name, attr: attr.id, attrType: attr.type, meta: first },
+						{
+							id: second.name,
+							attr: attr.id,
+							attrType: attr.type,
+							meta: second,
+						},
+						{ id: third.name, attr: attr.id, attrType: attr.type, meta: third },
 					]
 				);
 			});
 		});
-        console.log("top 3 of each attribute", allTopScoringPlayers);
 		let allAttributeScoredPlayers: any = {};
 		Object.keys(allTopScoringPlayers).forEach((key: any) => {
 			const currentTypePlayers = allTopScoringPlayers[key];
-            currentTypePlayers.forEach((playerAttrMap:any) => {
-                allAttributeScoredPlayers[key] = allAttributeScoredPlayers[key] || {};
-                if(allAttributeScoredPlayers[key][playerAttrMap.id]) {
-                    const currentAttributes: AttributeWeightageConfigSchema[] =  attrbuteConf[key as keyof typeof attrbuteConf];
-                    const current : AttributeWeightageConfigSchema = currentAttributes[playerAttrMap.attr]
-                    allAttributeScoredPlayers[key][playerAttrMap.id] += current.weightage;
-                } else {
-                    const currentAttributes: AttributeWeightageConfigSchema[] =  attrbuteConf[key as keyof typeof attrbuteConf];
-                    const current : AttributeWeightageConfigSchema = currentAttributes[playerAttrMap.attr]
-                    allAttributeScoredPlayers[key][playerAttrMap.id] = current.weightage;
-                }
-                allAttributeScoredPlayers[key][playerAttrMap.id]
-            });
-            allAttributeScoredPlayers[key]
+			currentTypePlayers.forEach((playerAttrMap: any) => {
+				allAttributeScoredPlayers[key] = allAttributeScoredPlayers[key] || [];
+				if (allAttributeScoredPlayers[key].filter((x:any) => x.playerId == playerAttrMap.id)?.length > 0) {
+					const currentAttributes: AttributeWeightageConfigSchema[] =
+						attrbuteConf[key as keyof typeof attrbuteConf];
+                        const current: AttributeWeightageConfigSchema =
+						currentAttributes.filter(x => x.id ==playerAttrMap.attr)[0];
+					const updatedScoreForPlayer = allAttributeScoredPlayers[key].filter((x:any) => x.playerId == playerAttrMap.id)[0].score += current.type == "positive" ?current.weightage : -1 * current.weightage;
+					(allAttributeScoredPlayers[key].find((pr:any) => pr.playerId === playerAttrMap.id)).score = updatedScoreForPlayer;
+				} else {
+					const currentAttributes: AttributeWeightageConfigSchema[] =
+						attrbuteConf[key as keyof typeof attrbuteConf];
+					const current: AttributeWeightageConfigSchema =
+						currentAttributes.filter(x => x.id ==playerAttrMap.attr)[0];
+					allAttributeScoredPlayers[key].push({
+                        playerId : playerAttrMap.id,
+                        score: current.type == "positive" ?current.weightage : -1 * current.weightage
+                    })
+				}
+			});
 		});
 
 		console.log(JSON.stringify(allAttributeScoredPlayers));
-		return playerGroups;
+        let top11Players:any = [];
+        Object.keys(allAttributeScoredPlayers).forEach(key => {
+            const topPlayersInEachPosition = allAttributeScoredPlayers[key].sort((x: any, y:any) => y.score - x.score).slice(0,maxPlayersForPosition[key as keyof typeof maxPlayersForPosition]);
+            const topPlayerWithPlayerDetails = topPlayersInEachPosition.map((player:any) => {
+                return {
+                    id: player.playerId,
+                    score: player.score,
+                    meta : playerGroups.filter((x:any) => x._id == key)[0].playersByPosition.filter((y:any) => y.id == player.playerId)[0]
+                }
+            });
+            top11Players.push({
+                pos: key,
+                players : topPlayerWithPlayerDetails
+            })
+        });
+		await currentTeamOfTheWeek.findOneAndUpdate({"$gameweek": parseInt(gw)},{ winners: top11Players, gameWeek: parseInt(gw)});
+		return top11Players;
 	} catch (ex: any) {
 		console.log(ex);
-		return {
-			error: ex.message,
-		};
+		return ex;
 	}
 }

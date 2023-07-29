@@ -9,7 +9,7 @@ export interface AttributeConfigSchema {
 export interface AttributeWeightageConfigSchema {
 	id : string,
 	name: string,
-	weightage: Number,
+	weightage: number,
 	type: string,
 	hint: string
 }

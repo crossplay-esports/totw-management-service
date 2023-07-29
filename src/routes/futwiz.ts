@@ -3,12 +3,14 @@ import { getTop11FutwizPlayers } from '../database/mongo/dao/futwiz';
 
 const router = express.Router();
 
-router.get("/top11-players", async (_req, res) => {
-    const result = await getTop11FutwizPlayers();
+router.get("/top11-players", async (req, res) => {
+    const gw : any = req.query.gw?.toString();
+    if(!gw) return res.status(400).send('gw is a required param');
+    const result = await getTop11FutwizPlayers(parseInt(gw));
     if(result)
-        res.status(200).send(result);
+        return res.status(200).send(result);
     else {
-        res.status(500).send('No Players found');
+        return res.status(500).send('No Players found');
     }
 });
 
