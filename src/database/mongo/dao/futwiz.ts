@@ -48,38 +48,47 @@ export async function getTop11FutwizPlayers(gw: number) {
 	const players = await futwiz.find().toArray();
 	const totwWinners = await getTotw(gw);
 	if (!totwWinners) return players;
+
+	const totwWinnersMap: Record<string, any> = {};
+
+	const { winners=[] } = totwWinners;
+	console.log(totwWinnersMap);
+	winners.forEach((cat: any) => {
+		const { pos, players=[] } = cat;
+		if(pos) {
+			totwWinnersMap[pos] = players;
+		}
+	})
+
 	const mergedPlayers = players.map((item: any) => {
 		if (["cf", "st", "lf", "rf", "lw", "rw"].indexOf(item.position.toLowerCase()) !== -1) {
-			const attackers = totwWinners.winners.filter(
-				(x: any) => x.pos == "attackers"
-			)[0];
-			const attacker = attackers.players.splice(0,1)[0];
-			totwWinners.winners[0].players = attackers.players;
+			const attackers = totwWinnersMap.attackers;
+			const attacker = attackers.splice(0,1)[0];
+			totwWinnersMap.attackers = attackers;
 			return {
 				...item,
-				name: attacker.id,
+				name: attacker?.id || item.name,
+				score: attacker?.score || undefined
 			};
 		}
 		else if (["lm", "rm", "cam", "cdm", "cm"].indexOf(item.position.toLowerCase()) !== -1) {
-			const mids = totwWinners.winners.filter(
-				(x: any) => x.pos == "mid"
-			)[0];
-			const mid = mids.players.splice(0,1)[0];
-			totwWinners.winners[1].players = mids.players;
+			const mids = totwWinnersMap.mid || [];
+			const mid = mids.splice(0,1)[0];
+			totwWinnersMap.mid = mids;
 			return {
 				...item,
-				name: mid.id,
+				name: mid?.id || item.name,
+				score: mid?.score || undefined
 			};
 		}
 		else if (["lb", "lwb","rb", "rwb", "cb"].indexOf(item.position.toLowerCase()) !== -1) {
-			const defenders = totwWinners.winners.filter(
-				(x: any) => x.pos == "defenders"
-			)[0];
-			const def = defenders.players.splice(0,1)[0];
-			totwWinners.winners[2].players = defenders.players;
+			const defenders = totwWinnersMap.defenders;
+			const def = defenders.splice(0,1)[0]; 
+			totwWinnersMap.defenders = defenders;
 			return {
 				...item,
-				name: def.id,
+				name: def?.id || item.name,
+				score: def?.score || undefined
 			};
 		}
 		else return item;

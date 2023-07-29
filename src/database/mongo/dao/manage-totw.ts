@@ -157,7 +157,7 @@ export async function calculateTeamOfTheWeek(gw: any) {
                 players : topPlayerWithPlayerDetails
             })
         });
-		await currentTeamOfTheWeek.findOneAndUpdate({"$gameweek": parseInt(gw)},{ winners: top11Players, gameWeek: parseInt(gw)});
+		await currentTeamOfTheWeek.updateOne({"gameWeek": parseInt(gw)},{$set: { winners: top11Players, gameWeek: parseInt(gw)}}, {upsert: true});
 		return top11Players;
 	} catch (ex: any) {
 		console.log(ex);
