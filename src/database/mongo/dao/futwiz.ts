@@ -48,20 +48,42 @@ export async function getTop11FutwizPlayers(gw: number) {
 	const players = await futwiz.find().toArray();
 	const totwWinners = await getTotw(gw);
 	if (!totwWinners) return players;
-	players.map((item: any) => {
-		let playerName = "";
-		if (["cf, st, lf, rf, lw, rw"].indexOf(item.position) !== -1) {
+	const mergedPlayers = players.map((item: any) => {
+		if (["cf", "st", "lf", "rf", "lw", "rw"].indexOf(item.position.toLowerCase()) !== -1) {
 			const attackers = totwWinners.winners.filter(
 				(x: any) => x.pos == "attackers"
 			)[0];
-			const attacker = attackers.splice(0,1);
-			
+			const attacker = attackers.players.splice(0,1)[0];
+			totwWinners.winners[0].players = attackers.players;
 			return {
 				...item,
-				name: attacker.name,
+				name: attacker.id,
 			};
 		}
+		else if (["lm", "rm", "cam", "cdm", "cm"].indexOf(item.position.toLowerCase()) !== -1) {
+			const mids = totwWinners.winners.filter(
+				(x: any) => x.pos == "mid"
+			)[0];
+			const mid = mids.players.splice(0,1)[0];
+			totwWinners.winners[1].players = mids.players;
+			return {
+				...item,
+				name: mid.id,
+			};
+		}
+		else if (["lb", "lwb","rb", "rwb", "cb"].indexOf(item.position.toLowerCase()) !== -1) {
+			const defenders = totwWinners.winners.filter(
+				(x: any) => x.pos == "defenders"
+			)[0];
+			const def = defenders.players.splice(0,1)[0];
+			totwWinners.winners[2].players = defenders.players;
+			return {
+				...item,
+				name: def.id,
+			};
+		}
+		else return item;
 	});
-	console.log(totwWinners);
-	return players;
+	console.log(mergedPlayers);
+	return mergedPlayers;
 }
