@@ -1,6 +1,12 @@
 import express from "express";
-import { memberSearch, teamSearch } from "../database/discord/dao/guild";
+import multer from "multer";
+import {
+	memberSearch,
+	postOnTotw,
+	teamSearch,
+} from "../database/discord/dao/guild";
 
+const upload = multer();
 const router = express.Router();
 
 router.use((_req, _res, next) => {
@@ -34,7 +40,11 @@ router.get("/team/search", async (req, res, _next) => {
 		}
 		console.log(limit);
 		const teams = await teamSearch();
-		const leagueTeams = teams.filter((t:any) => t.name.toLowerCase().indexOf('team - ') !== -1 && t.name.toLowerCase().indexOf(team.toString().toLowerCase()) !== -1);
+		const leagueTeams = teams.filter(
+			(t: any) =>
+				t.name.toLowerCase().indexOf("team - ") !== -1 &&
+				t.name.toLowerCase().indexOf(team.toString().toLowerCase()) !== -1
+		);
 		console.log(leagueTeams);
 		res.send(leagueTeams);
 	} catch (e: any) {
@@ -42,5 +52,20 @@ router.get("/team/search", async (req, res, _next) => {
 		res.json({ err: e.message });
 	}
 });
+
+router.post(
+	"/channel/totw",
+	upload.single("image"),
+	async (req, res, _next) => {
+		try {
+			const image: any = req.file;
+			console.log(image);
+			const response = await postOnTotw(image);
+			res.status(201).send(response);
+		} catch (ex: any) {
+			res.status(500).send(ex.message);
+		}
+	}
+);
 
 export default router;

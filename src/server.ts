@@ -11,6 +11,7 @@ import { seedAttributeWeight } from './database/config/attributeWeightConfig';
 
 require("dotenv").config();
 
+
 //connect to mongo
 connect().then(() => {
     console.log('connected to mongo successfully!!');

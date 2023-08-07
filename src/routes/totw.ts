@@ -6,6 +6,7 @@ import {
 
 const router = express.Router();
 
+
 router.use((_req, _res, next) => {
 	console.log("Inside totw router: ", Date.now());
 	next();
