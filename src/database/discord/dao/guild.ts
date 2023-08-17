@@ -43,6 +43,7 @@ export async function teamSearch() {
 	var reqHeader = new Headers();
 	reqHeader.append("Content-Type", "application/json");
 	reqHeader.append("Authorization", `Bot ${discordBotToken}`);
+	console.log(discordBotToken,reqHeader);
 	const response = await fetch(
 		`${discordBaseURL}/guilds/${discordGuildId}/roles`,
 		{
