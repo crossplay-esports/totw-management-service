@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import {
+	getMembersByRoleId,
 	memberSearch,
 	postOnTotw,
 	teamSearch,
@@ -51,6 +52,13 @@ router.get("/team/search", async (req, res, _next) => {
 		res.status(500);
 		res.json({ err: e.message });
 	}
+});
+
+router.get("/role/members", async(req, res, _next) => {
+	const {query} = req;
+	const {roleId} = query;
+	const roleMembers = await getMembersByRoleId(roleId);
+	res.json(roleMembers);
 });
 
 router.post(

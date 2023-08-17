@@ -21,6 +21,24 @@ export async function memberSearch(gt: any, limit: any) {
 	return result;
 }
 
+export async function getMembersByRoleId(roleId: any) {
+	var reqHeader = new Headers();
+	reqHeader.append("Content-Type", "application/json");
+	reqHeader.append("Authorization", `Bot ${discordBotToken}`);
+	const response = await fetch(
+		`${discordBaseURL}/guilds/${discordGuildId}/members?limit=1000`,
+		{
+			headers: reqHeader,
+		}
+	);
+	const result = await response.json();
+	console.log(result);
+	const membersInRole = result.filter((item: any) => {
+		return item.roles.includes(roleId)
+	})
+	return membersInRole;
+}
+
 export async function teamSearch() {
 	var reqHeader = new Headers();
 	reqHeader.append("Content-Type", "application/json");
